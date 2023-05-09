@@ -26,11 +26,12 @@ public class JavaBossBot extends TelegramLongPollingBot {
 		}
 		return instance;
 	}
-
+	/*
 	private JavaBossBot(){
 		super(botToken);
 	}
-
+	*/
+	
 	@Override
 	public String getBotToken() {
 		return botToken;
