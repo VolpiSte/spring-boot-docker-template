@@ -41,20 +41,79 @@ public class JavaBossBot extends TelegramLongPollingBot {
 		return botUsername;
 	}
 
+	private Map<String, Double> menu = new HashMap<>();
+
+	public JavaBossBot() {
+		super(botToken);
+		// Aggiungi i prodotti e i prezzi al menu
+		menu.put("paneCotoletta", 5.0);
+		menu.put("paneWurstel", 4.5);
+		menu.put("pizzaPiegata", 8.0);	
+	}
+
 	@Override
 	public void onUpdateReceived(Update update) {
-		if (update.hasMessage() && update.getMessage().hasText()) {
-			
-			long chatId = update.getMessage().getChatId();
-			
-			SendMessage message = new SendMessage();
-			message.setChatId(chatId);
-			message.setText("Benvenuto! Come posso aiutarti?");
-			
-			try {
-				execute(message);
-			} catch (TelegramApiException e) {
-				LOG.error(e.getMessage());
+		    if (update.hasMessage() && update.getMessage().hasText()) {
+        	String messageText = update.getMessage().getText();
+        	long chatId = update.getMessage().getChatId();
+
+			if (command.equals("/run")) {
+				String message = "Ciao";
+				SendMessage response = new SendMessage();
+				response.setChatId(update.getMessage().getChatId().toString());
+				response.setText(message);
+				try{
+					execute(response);
+				} catch (TelegramApiException E){
+					E.printStackTrace();
+				}
+			} else if (command.equals("/ordina")) {
+				SendMessage response = new SendMessage();
+				response.setChatId(update.getMessage().getChatId().toString());
+				response.setText("Scegli il tuo ordine:");
+
+				ReplyKeyboardMarkup keyboardMarkup = new ReplyKeyboardMarkup();
+				keyboardMarkup.setSelective(true);
+				keyboardMarkup.setResizeKeyboard(true);
+				keyboardMarkup.setOneTimeKeyboard(true);
+
+				List<KeyboardRow> keyboard = new ArrayList<>();
+				for (String item : menu.keySet()) {
+					KeyboardRow row = new KeyboardRow();
+					row.add(item);
+					keyboard.add(row);
+				}
+
+				keyboardMarkup.setKeyboard(keyboard);
+				response.setReplyMarkup(keyboardMarkup);
+
+				try{
+					execute(response);
+				} catch (TelegramApiException E){
+					E.printStackTrace();
+				}
+			}else if (messageText.startsWith("/soldi")) {
+				try {
+					double amount = Double.parseDouble(messageText.split(" ")[1].replace(",", "."));
+					soldi += amount;
+					SendMessage response = new SendMessage(chatId, "Soldi aggiunti correttamente!");
+					execute(response);
+				} catch (Exception e) {
+					SendMessage response = new SendMessage(chatId, "Formato denaro non valido!");
+					execute(response);
+				}
+        	} else if (menu.containsKey(command)) {
+				double price = menu.get(command);
+
+				SendMessage response = new SendMessage();
+				response.setChatId(update.getMessage().getChatId().toString());
+				response.setText(String.format("Hai ordinato %s per %.2f euro.", command, price));
+
+				try{
+					execute(response);
+				} catch (TelegramApiException E){
+					E.printStackTrace();
+				}
 			}
 		}
 	}
